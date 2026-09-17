@@ -10,7 +10,8 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== location.origin) return;
   if (request.mode === 'navigate') {
-    event.respondWith(caches.open(CACHE).then(cache => cache.match(url.pathname === '/how-it-works.html' ? '/how-it-works.html' : '/index.html', { ignoreVary: true })).then(cached => cached || fetch(request)));
+    const page = url.pathname === '/how-it-works' || url.pathname === '/how-it-works.html' ? '/how-it-works.html' : '/index.html';
+    event.respondWith(caches.open(CACHE).then(cache => cache.match(page, { ignoreVary: true })).then(cached => cached || fetch(request)));
   } else if (SHELL.includes(url.pathname)) {
     event.respondWith(caches.open(CACHE).then(cache => cache.match(url.pathname, { ignoreVary: true })).then(cached => cached || fetch(request)));
   }
