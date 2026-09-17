@@ -1,0 +1,48 @@
+import { chromium, expect } from '@playwright/test';
+const base = process.argv[2];
+if (!base?.startsWith('https://')) throw Error('Provide the deployed HTTPS app URL.');
+const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
+const context=await browser.newContext({viewport:{width:360,height:800},isMobile:true,hasTouch:true});
+const errors=[];
+try {
+ let page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));
+ await page.goto(base);
+ await page.getByLabel('Rate per accepted liter (INR)').fill('40');
+ await page.getByLabel('I understand this browser holds my workspace access.').check();
+ await page.getByRole('button',{name:'Set up this phone'}).click();
+ await expect(page.getByRole('button',{name:'Confirm session & continue'})).toBeVisible({timeout:20000});
+ await page.getByRole('button',{name:'Confirm session & continue'}).click();
+ await page.getByLabel('Unique numeric farmer ID').fill('902');
+ await page.getByLabel('Farmer name',{exact:true}).fill('Deployment check (fictional)');
+ await page.getByRole('button',{name:'Register & start delivery'}).click();
+ await page.getByLabel('Volume (L)').fill('10');await page.getByLabel('Fat (%)',{exact:true}).fill('4');
+ await page.getByRole('button',{name:'Save accepted can'}).click();
+ await expect(page.getByLabel('Volume (L)')).toHaveValue('');
+ await page.evaluate(()=>navigator.serviceWorker.ready.then(()=>undefined));
+ await page.getByRole('button',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'Sync now'}).click();
+ await expect(page.locator('#sync-label')).toContainText('Records synced',{timeout:20000});
+ await context.setOffline(true);await page.close();page=await context.newPage();
+ await page.goto(base);await page.getByRole('button',{name:'Confirm session & continue'}).click();
+ await page.getByLabel('Volume (L)').fill('7');await page.getByLabel('× Reject',{exact:true}).check();
+ await page.getByLabel('Fat was not measured').check();await page.getByRole('combobox',{name:'Rejection reason',exact:true}).selectOption('Sour smell');
+ const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=1600;c.height=1200;const x=c.getContext('2d');x.fillStyle='#eee';x.fillRect(0,0,c.width,c.height);x.fillStyle='#222';x.font='80px sans-serif';x.fillText('Fictional evidence test',50,200);return c.toDataURL('image/png').split(',')[1];});
+ await page.locator('input[type=file]').setInputFiles({name:'fictional-evidence.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+ await expect(page.locator('#preview')).toBeVisible();
+ await page.getByRole('button',{name:'Save rejected can'}).click();
+ await page.getByRole('button',{name:'Finish delivery',exact:true}).click();
+ await page.getByRole('button',{name:'Daily summary',exact:true}).click();
+ await expect(page.locator('.stat').first()).toContainText('10.00 L');
+ await expect(page.getByText('Photo pending',{exact:true})).toBeVisible();
+ const compressed=await page.evaluate(()=>new Promise((resolve,reject)=>{const r=indexedDB.open('dairy-intake-v1');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result;const q=db.transaction('state').objectStore('state').get('ledger');q.onsuccess=async()=>{const p=q.result.ledger.photos[0];const bitmap=await createImageBitmap(p.blob);resolve({size:p.size,width:bitmap.width,height:bitmap.height});bitmap.close();db.close();};};}));
+ expect(compressed.size).toBeLessThanOrEqual(100000);expect(Math.max(compressed.width,compressed.height)).toBeLessThanOrEqual(960);
+ await context.setOffline(false);
+ await page.getByRole('button',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'Sync now'}).click();
+ await expect(page.locator('#sync-label')).toContainText('Records synced • Photos synced',{timeout:30000});
+ await page.getByRole('button',{name:'Daily summary',exact:true}).click();await expect(page.getByText('Photo synced',{exact:true})).toBeVisible();
+ const download=page.waitForEvent('download');await page.getByRole('button',{name:'Export full ledger'}).click();await download;
+ const walkthrough=await context.newPage();await walkthrough.goto(base+'/how-it-works.html');await expect(walkthrough.locator('figure img')).toHaveCount(4);
+ for(const img of await walkthrough.locator('figure img').all()){await img.scrollIntoViewIfNeeded();await expect.poll(()=>img.evaluate(el=>el.complete&&el.naturalWidth>0)).toBe(true);}
+ expect(errors).toEqual([]);
+ console.log('PASS public app setup, live sync, offline page reopening, rejected-can photo compression/retention, reconnection photo sync, export, and four walkthrough images.');
+ console.log('Compression result:',JSON.stringify(compressed));
+} finally {await context.close();await browser.close();}

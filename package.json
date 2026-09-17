@@ -1,0 +1,26 @@
+{
+  "name": "dairy-intake",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "test:browser": "playwright test",
+    "deploy": "npm run build && wrangler deploy",
+    "build:browser": "vite build --mode browser --outDir dist-browser"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "fake-indexeddb": "^6.2.2",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.38.0"
+  }
+}

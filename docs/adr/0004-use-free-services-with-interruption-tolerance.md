@@ -1,0 +1,3 @@
+# Use free managed services and tolerate synchronization interruptions
+
+The prototype must provide real synchronization and photo storage without paid services, so use Supabase Free for records and private photos and Cloudflare static hosting for the app and walkthrough. Accept free-tier pausing and capacity restrictions, keep affected records pending locally, and enforce upload budgets without enabling paid upgrades. Cloudflare R2 was considered but its billable overage model is less suitable for this strict zero-cost boundary; this choice trades uninterrupted server availability for predictable cost.

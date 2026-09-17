@@ -1,0 +1,3 @@
+# Use anonymous browser workspaces with a disclosed recovery limit
+
+The public prototype isolates each visitor's records in an anonymous workspace so unrelated visitors do not share one editable ledger. Workspace access is retained in the original browser, and account-based recovery and cross-device access are outside scope; clearing browser data therefore loses unsynced entries and access to the workspace, including already-synced records. This accepts a recovery limitation in exchange for a smaller setup and identity scope, with disclosure during setup and a downloadable ledger export; the export is not a promised workspace-restore mechanism.
